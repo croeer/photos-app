@@ -1,24 +1,26 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import logo from "./logo.svg";
+import PhotoUpload from "./components/PhotoUpload";
+import PhotoGallery from "./components/PhotoGallery";
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div className="mt-10 mb-10 flex justify-center">
+        <img src={logo} alt="" />
+      </div>
+      <div className="mt-10 mb-10 flex justify-center">
+        <PhotoUpload
+          url={"https://o1xlh7o7c5.execute-api.eu-central-1.amazonaws.com"}
+          maxPhotosPerRequest={10}
+          onUpload={() => {
+            window.location.reload();
+          }}
+        />
+      </div>
+      <PhotoGallery
+        initialUrl={"https://o1xlh7o7c5.execute-api.eu-central-1.amazonaws.com"}
+      />
     </div>
   );
 }
