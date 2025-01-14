@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 const PendingUpload = () => (
   <svg
@@ -18,22 +18,22 @@ const PendingUpload = () => (
   </svg>
 );
 
-const toUploadClassName = status => {
+const toUploadClassName = (status) => {
   switch (status) {
-    case 'uploading':
-      return 'px-4 py-2 border-b border-gray-200 w-full font-medium truncate';
-    case 'failed':
-      return 'px-4 py-2 border-b border-gray-200 w-full line-through truncate';
-    case 'uploaded':
-      return 'px-4 py-2 border-b border-gray-200 w-full truncate';
+    case "uploading":
+      return "px-4 py-2 border-b border-gray-200 w-full font-medium truncate";
+    case "failed":
+      return "px-4 py-2 border-b border-gray-200 w-full line-through truncate";
+    case "uploaded":
+      return "px-4 py-2 border-b border-gray-200 w-full truncate";
     default:
-      return 'px-4 py-2 border-b border-gray-200 w-full text-gray-300 truncate';
+      return "px-4 py-2 border-b border-gray-200 w-full text-gray-300 truncate";
   }
 };
 
-const calcUploadProgress = uploads => {
+const calcUploadProgress = (uploads) => {
   const processed = uploads.filter(
-    ({ status }) => status === 'uploaded' || status === 'failed'
+    ({ status }) => status === "uploaded" || status === "failed"
   ).length;
 
   return (processed / uploads.length) * 100;
@@ -47,33 +47,38 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
   useEffect(() => {
     if (!isOpen) return;
 
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  const handleUpload = async e => {
-    const newUploads = [...e.target.files].map(({ name }) => ({ name, status: 'pending' }));
+  const handleUpload = async (e) => {
+    const newUploads = [...e.target.files].map(({ name }) => ({
+      name,
+      status: "pending",
+    }));
 
     if (newUploads.length === 0) {
       return;
     }
 
     if (newUploads.length > maxPhotosPerRequest) {
-      setError(`Sorry, you can only upload ${maxPhotosPerRequest} photos at a time.`);
+      setError(
+        `Sorry, you can only upload ${maxPhotosPerRequest} photos at a time.`
+      );
       return;
     }
 
     setUploads(newUploads);
 
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({
         photos: JSON.stringify(newUploads.map(({ name }) => name)),
       }),
-    }).then(response => response.json());
+    }).then((response) => response.json());
 
     for (let i = 0; i < newUploads.length; i++) {
       const request = response.urls[i];
@@ -82,27 +87,30 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
       for (const key of Object.keys(request.fields)) {
         formData.append(key, request.fields[key]);
       }
-      formData.append('file', e.target.files[i], 'file');
+      formData.append("file", e.target.files[i], "file");
 
-      setUploads(uploads => {
+      setUploads((uploads) => {
         const newUploads = [...uploads];
-        newUploads[i] = { ...newUploads[i], status: 'uploading' };
+        newUploads[i] = { ...newUploads[i], status: "uploading" };
         return newUploads;
       });
 
       await fetch(request.url, {
-        method: 'POST',
+        method: "POST",
         body: formData,
-      }).then(response => {
-        setUploads(uploads => {
+      }).then((response) => {
+        setUploads((uploads) => {
           const newUploads = [...uploads];
-          newUploads[i] = { ...newUploads[i], status: response.ok ? 'uploaded' : 'failed' };
+          newUploads[i] = {
+            ...newUploads[i],
+            status: response.ok ? "uploaded" : "failed",
+          };
           return newUploads;
         });
       });
     }
 
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
     setOpen(false);
     setUploads([]);
     onUpload();
@@ -115,7 +123,7 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
         type="button"
         onClick={() => setOpen(true)}
       >
-        Upload photos
+        Fotos hochladen
       </button>
       {isOpen && (
         <div className="fixed top-0 left-0 z-80 w-screen h-screen flex justify-center items-center bg-black/70 p-2 md:p-0">
@@ -161,7 +169,7 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
                   <ul className="mt-4 bg-white rounded-lg border border-gray-200 text-gray-900">
                     {uploads.map(({ name, status }) => (
                       <li className={toUploadClassName(status)} key={name}>
-                        {status === 'uploading' && <PendingUpload />}
+                        {status === "uploading" && <PendingUpload />}
                         {name}
                       </li>
                     ))}

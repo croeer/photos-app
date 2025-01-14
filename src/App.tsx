@@ -6,6 +6,16 @@ import PhotoGallery from "./components/PhotoGallery";
 function App() {
   return (
     <div className="App">
+      <div className="mt-5 mb-5 flex justify-center">
+        <div className="text-center text-gray-600 text-2xl">
+          Sandra & Chris
+        </div>
+      </div>
+      <div className="mt-5 mb-5 flex justify-center">
+        <div className="text-center text-gray-600">
+          Wir sagen ja!
+        </div>
+      </div>
       <div className="mt-10 mb-10 flex justify-center">
         <img src={logo} alt="" />
       </div>
