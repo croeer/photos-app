@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import logo from "./logo.svg";
-import { AiOutlineQuestionCircle, AiOutlineReload } from "react-icons/ai";
+import {
+  AiOutlineQuestionCircle,
+  AiOutlineReload,
+  AiOutlineCamera,
+} from "react-icons/ai";
 import PhotoUpload from "./components/PhotoUpload";
 import PhotoGallery from "./components/PhotoGallery";
 import LoadingBar from "./components/LoadingBar";
@@ -9,11 +13,16 @@ import { LuGlasses } from "react-icons/lu";
 interface BootstrapLinks {
   request?: { href: string };
   list?: { href: string };
+  challenge?: { href: string };
 }
 
 interface Bootstrap {
   _links?: BootstrapLinks;
   maxPhotosPerRequest?: number;
+}
+
+interface RandomChallenge {
+  challenge: string;
 }
 
 interface AppProps {
@@ -23,6 +32,8 @@ interface AppProps {
 function App({ bootstrapUrl }: AppProps): JSX.Element {
   const [bootstrap, setBootstrap] = useState<Bootstrap | undefined>(undefined);
   const [showHelp, setShowHelp] = useState(false);
+  const [showRandomChallenge, setShowRandomChallenge] = useState(false);
+  const [challenge, setChallenge] = useState<RandomChallenge | null>(null);
 
   useEffect(() => {
     console.log("Fetching bootstrap data from", bootstrapUrl);
@@ -43,6 +54,23 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
     window.location.reload(); // Refresh the page
   };
 
+  const handleToggleRandomChallenge = () => {
+    setShowRandomChallenge(!showRandomChallenge);
+  };
+
+  const handleRandomPhotoChallenge = () => {
+    setShowRandomChallenge(true);
+    fetch(bootstrap?._links?.challenge?.href || "")
+      .then((response) => response.json())
+      .then((data: RandomChallenge) => {
+        setChallenge(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching random challenge:", error);
+        setShowRandomChallenge(false);
+      });
+  };
+
   return (
     <div className="App">
       <div className="relative">
@@ -57,10 +85,18 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           </button>
         </div>
         {/* Help Icon in the Upper Right Corner */}
-        <div className="absolute top-5 right-5">
+        <div className="absolute top-5 right-5 flex space-x-4">
+          <button
+            onClick={handleRandomPhotoChallenge}
+            className="text-gray-600 hover:text-gray-800"
+            title="Zufällige Foto-Challenge"
+          >
+            <AiOutlineCamera size={26} />
+          </button>
           <button
             onClick={handleToggleHelp}
             className="text-gray-600 hover:text-gray-800"
+            title="Hilfe"
           >
             <AiOutlineQuestionCircle size={24} />
           </button>
@@ -87,8 +123,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
               sind. Sie erscheinen dann automatisch in der Galerie.
             </p>
             <p className="mt-3">
-              In der Galerie siehst du alle hochgeladenen Fotos. Foto zu klein?
-              Keine{" "}
+              Foto zu klein? Keine{" "}
               {
                 <span className="inline-block">
                   <LuGlasses />
@@ -96,8 +131,32 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
               }
               ? Klicke auf ein Foto, um es dir größer anzusehen.
             </p>
+            <p className="mt-3">
+              Über das{" "}
+              <span className="inline-block">
+                <AiOutlineCamera />
+              </span>
+              -Symbol kannst du dir Inspiration für eine Foto-Challenge holen.
+            </p>
             <button
               onClick={handleToggleHelp}
+              className="mt-5 px-4 py-2 bg-purple-800 text-white rounded hover:bg-purple-600"
+            >
+              Schließen
+            </button>
+          </div>
+        </div>
+      )}
+      {showRandomChallenge && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded shadow-lg max-w-sm text-center">
+            <h2 className="text-lg font-bold mb-3">
+              Deine zufällige Foto-Challenge
+            </h2>
+            <p className="mt-3">{challenge?.challenge}</p>
+
+            <button
+              onClick={handleToggleRandomChallenge}
               className="mt-5 px-4 py-2 bg-purple-800 text-white rounded hover:bg-purple-600"
             >
               Schließen
