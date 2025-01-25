@@ -106,10 +106,15 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           </button>
         </div>
       </div>
-      <div className="mt-5 mb-5 flex justify-center">
-        <div className="text-center text-gray-600 text-2xl">Sandra & Chris</div>
+      <div className="mt-5 mb-3 flex justify-center">
+        <div className="text-center text-gray-600 text-3xl font-custom">
+          Sandra & Chris
+        </div>
       </div>
-      <div className="mt-5 mb-5 flex justify-center">
+      <div className="mt-3 mb-3 flex justify-center">
+        <div className="text-center text-gray-600 text-sm">22.03.2025</div>
+      </div>
+      <div className="mt-3 mb-5 flex justify-center">
         <div className="text-center text-gray-600">Wir sagen ja!</div>
       </div>
       <div className="mt-10 mb-10 flex justify-center">
