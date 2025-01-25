@@ -19,6 +19,8 @@ interface BootstrapLinks {
 interface Bootstrap {
   _links?: BootstrapLinks;
   maxPhotosPerRequest?: number;
+  enablePhotoChallenge?: boolean;
+  enablePhotoUpload?: boolean;
 }
 
 interface RandomChallenge {
@@ -86,13 +88,15 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         </div>
         {/* Help Icon in the Upper Right Corner */}
         <div className="absolute top-5 right-5 flex space-x-4">
-          <button
-            onClick={handleRandomPhotoChallenge}
-            className="text-gray-600 hover:text-gray-800"
-            title="Zufällige Foto-Challenge"
-          >
-            <AiOutlineCamera size={26} />
-          </button>
+          {bootstrap.enablePhotoChallenge && (
+            <button
+              onClick={handleRandomPhotoChallenge}
+              className="text-gray-600 hover:text-gray-800"
+              title="Zufällige Foto-Challenge"
+            >
+              <AiOutlineCamera size={26} />
+            </button>
+          )}
           <button
             onClick={handleToggleHelp}
             className="text-gray-600 hover:text-gray-800"
@@ -164,15 +168,17 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           </div>
         </div>
       )}
-      <div className="mt-10 mb-10 flex justify-center">
-        <PhotoUpload
-          url={bootstrap._links?.request?.href}
-          maxPhotosPerRequest={10}
-          onUpload={() => {
-            window.location.reload();
-          }}
-        />
-      </div>
+      {bootstrap.enablePhotoUpload && (
+        <div className="mt-10 mb-10 flex justify-center">
+          <PhotoUpload
+            url={bootstrap._links?.request?.href}
+            maxPhotosPerRequest={10}
+            onUpload={() => {
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
       <PhotoGallery initialUrl={bootstrap._links?.request?.href} />
     </div>
   );
