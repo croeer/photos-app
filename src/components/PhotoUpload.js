@@ -118,13 +118,39 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
 
   return (
     <>
-      <button
-        className="block text-white bg-cadbury hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-        type="button"
-        onClick={() => setOpen(true)}
-      >
-        Fotos hochladen
-      </button>
+      {uploads.length > 0 ? (
+        <div className="mt-8">
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{
+                width: `${calcUploadProgress(uploads)}%`,
+              }}
+            ></div>
+          </div>
+          <ul className="mt-4 bg-white rounded-lg border border-gray-200 text-gray-900">
+            {uploads.map(({ name, status }) => (
+              <li className={toUploadClassName(status)} key={name}>
+                {status === "uploading" && <PendingUpload />}
+                {name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div className="relative">
+          <button className="block text-white bg-cadbury hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+            Fotos hochladen
+          </button>
+          <input
+            type="file"
+            onChange={handleUpload}
+            accept=".jpg, .jpeg, image/jpg, image/jpeg"
+            multiple
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
+      )}
       {isOpen && (
         <div className="fixed top-0 left-0 z-80 w-screen h-screen flex justify-center items-center bg-black/70 p-2 md:p-0">
           <div className="relative bg-white rounded-lg z-90 w-full h-full max-w-md md:h-auto overflow-auto">
@@ -176,12 +202,18 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
                   </ul>
                 </div>
               ) : (
-                <input
-                  type="file"
-                  onChange={handleUpload}
-                  accept=".jpg, .jpeg, image/jpg, image/jpeg"
-                  multiple
-                />
+                <div className="relative">
+                  <button className="block text-white bg-cadbury hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    Fotos hochladen
+                  </button>
+                  <input
+                    type="file"
+                    onChange={handleUpload}
+                    accept=".jpg, .jpeg, image/jpg, image/jpeg"
+                    multiple
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
               )}
             </div>
           </div>
