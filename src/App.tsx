@@ -4,6 +4,7 @@ import {
   AiOutlineQuestionCircle,
   AiOutlineReload,
   AiOutlineCamera,
+  AiOutlineArrowUp,
 } from "react-icons/ai";
 import PhotoUpload from "./components/PhotoUpload";
 import PhotoGallery from "./components/PhotoGallery";
@@ -36,6 +37,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
   const [showHelp, setShowHelp] = useState(false);
   const [showRandomChallenge, setShowRandomChallenge] = useState(false);
   const [challenge, setChallenge] = useState<RandomChallenge | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     console.log("Fetching bootstrap data from", bootstrapUrl);
@@ -44,9 +46,13 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
       .then((data: Bootstrap) => setBootstrap(data));
   }, [bootstrapUrl]);
 
-  if (!bootstrap) {
-    return <LoadingBar />;
-  }
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > window.innerHeight);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleToggleHelp = () => {
     setShowHelp(!showHelp);
@@ -72,6 +78,14 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         setShowRandomChallenge(false);
       });
   };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (!bootstrap) {
+    return <LoadingBar />;
+  }
 
   return (
     <div className="App">
@@ -185,6 +199,15 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         </div>
       )}
       <PhotoGallery initialUrl={bootstrap._links?.request?.href} />
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 p-3 bg-cadbury text-white rounded-full shadow-lg hover:bg-purple-800 transition-all"
+          aria-label="Scroll to top"
+        >
+          <AiOutlineArrowUp size={24} />
+        </button>
+      )}
     </div>
   );
 }
