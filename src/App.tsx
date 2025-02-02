@@ -200,6 +200,10 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           />
         </div>
       )}
+      <PhotoGallery
+        initialUrl={bootstrap._links?.request?.href}
+        likesUrl={bootstrap._links?.likes?.href}
+      />
       {showScrollTop && (
         <button
           onClick={scrollToTop}
@@ -209,10 +213,6 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           <AiOutlineArrowUp size={24} />
         </button>
       )}
-      <PhotoGallery
-        initialUrl={bootstrap._links?.request?.href}
-        likesUrl={bootstrap._links?.likes?.href}
-      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroller";
 import Lightbox from "./Lightbox";
 import LoadingBar from "./LoadingBar";
@@ -19,6 +19,10 @@ function PhotoGallery({ initialUrl, likesUrl }) {
   const [nextUrl, setNextUrl] = useState(undefined);
   const [selected, setSelected] = useState(undefined);
   const [userLikes, setUserLikes] = useState({});
+  const [likesLoaded, setLikesLoaded] = useState(false);
+  const ongoingFetch = useRef(new Set()); // Stores in-progress URLs
+
+  const hasFetchedLikes = useRef(false); // Prevents multiple fetches
 
   useEffect(() => {
     setNextUrl(initialUrl);
@@ -26,6 +30,9 @@ function PhotoGallery({ initialUrl, likesUrl }) {
 
   useEffect(() => {
     console.log("useeffect: likes");
+    if (hasFetchedLikes.current) return; // Run only once
+    hasFetchedLikes.current = true; // Mark as executed
+
     const fetchLikes = async () => {
       try {
         const userId = getUserId();
@@ -39,8 +46,10 @@ function PhotoGallery({ initialUrl, likesUrl }) {
         }, {});
 
         setUserLikes(likesMap);
+        setLikesLoaded(true);
       } catch (error) {
         console.error("Error fetching user likes:", error);
+        setLikesLoaded(true);
       }
     };
 
@@ -48,19 +57,27 @@ function PhotoGallery({ initialUrl, likesUrl }) {
   }, [likesUrl]);
 
   const doFetch = useCallback(async () => {
-    console.log("fetching", nextUrl);
-    const response = await fetch(nextUrl).then((response) => response.json());
-    console.log(response);
-    setPhotos((photos) => [...photos, ...response?.photos]);
-    setNextUrl(response?._links?.next?.href);
+    if (!nextUrl || ongoingFetch.current.has(nextUrl)) return; // Prevent duplicate fetch
+    ongoingFetch.current.add(nextUrl); // Mark as in-progress
 
-    return response.length > 0;
+    try {
+      console.log("fetching", nextUrl);
+      const response = await fetch(nextUrl).then((response) => response.json());
+      console.log(response);
+      setPhotos((photos) => [...photos, ...response?.photos]);
+      setNextUrl(response?._links?.next?.href);
+      return response.length > 0;
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      ongoingFetch.current.delete(nextUrl); // Remove from in-progress after completion
+    }
   });
 
   return (
     <>
       <InfiniteScroll
-        loadMore={doFetch}
+        loadMore={likesLoaded ? doFetch : () => {}}
         hasMore={!!nextUrl}
         loader={<LoadingBar />}
       >
