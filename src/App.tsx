@@ -15,6 +15,7 @@ interface BootstrapLinks {
   request?: { href: string };
   list?: { href: string };
   challenge?: { href: string };
+  likes?: { href: string };
 }
 
 interface Bootstrap {
@@ -47,6 +48,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
   }, [bootstrapUrl]);
 
   useEffect(() => {
+    console.log("figuring out scroll component");
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > window.innerHeight);
     };
@@ -191,14 +193,13 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         <div className="mt-10 mb-10 flex justify-center">
           <PhotoUpload
             url={bootstrap._links?.request?.href}
-            maxPhotosPerRequest={10}
+            maxPhotosPerRequest={bootstrap.maxPhotosPerRequest}
             onUpload={() => {
               window.location.reload();
             }}
           />
         </div>
       )}
-      <PhotoGallery initialUrl={bootstrap._links?.request?.href} />
       {showScrollTop && (
         <button
           onClick={scrollToTop}
@@ -208,6 +209,10 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           <AiOutlineArrowUp size={24} />
         </button>
       )}
+      <PhotoGallery
+        initialUrl={bootstrap._links?.request?.href}
+        likesUrl={bootstrap._links?.likes?.href}
+      />
     </div>
   );
 }

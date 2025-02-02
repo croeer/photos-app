@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
 function Photo({
   src,
@@ -9,6 +10,7 @@ function Photo({
 }) {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [liked, setLiked] = useState(false);
 
   const handleTouchStart = useCallback((e) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -27,16 +29,35 @@ function Photo({
   }, [touchStart, touchEnd, minSwipeDistance, onSwipeLeft, onSwipeRight]);
 
   return (
-    <img
-      alt=""
-      className="max-h-[90vh]"
-      src={src}
-      style={{ marginLeft: touchEnd !== 0 ? touchEnd - touchStart : 0 }}
-      onClick={onClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    />
+    <>
+      <div className="relative inline-block">
+        <img
+          alt=""
+          className="max-h-[90vh]"
+          src={src}
+          style={{ marginLeft: touchEnd !== 0 ? touchEnd - touchStart : 0 }}
+          onClick={onClick}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        />
+        <div className="absolute bottom-4 right-4 flex items-center gap-2">
+          <button
+            className="flex items-center gap-1 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1.5 text-white transition-colors"
+            onClick={(e) => {
+              // Prevent the click event from bubbling up to parent elements
+              // Without this, clicking the like button would trigger the lightbox close
+              e.stopPropagation();
+              setLiked(!liked);
+              // TODO: Implement like functionality
+            }}
+          >
+            {liked ? <AiFillHeart /> : <AiOutlineHeart />}
+            <span className="text-sm font-medium">{125}</span>
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
