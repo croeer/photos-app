@@ -78,24 +78,30 @@ function Lightbox({ photo, onNext, onPrevious, onClose }) {
 
   return (
     <div
-      className="fixed top-0 left-0 z-80 w-screen h-screen flex justify-center items-center bg-black/70"
+      className="fixed top-0 left-0 z-50 w-screen h-screen flex justify-center items-center bg-black/70"
       onClick={onClose}
     >
+      {/* Close Button with the highest z-index */}
       <button
-        className="fixed z-90 top-6 right-8 text-white text-5xl font-bold cursor-pointer"
+        className="fixed z-[9999] top-6 right-8 text-white text-5xl font-bold cursor-pointer"
         onClick={onClose}
       >
         &times;
       </button>
-      <Photo
-        src={photo.web}
-        onClick={(e) => {
-          e.stopPropagation();
-          onNext();
-        }}
-        onSwipeLeft={onNext}
-        onSwipeRight={onPrevious}
-      />
+
+      {/* Image Container to constrain large images */}
+      <div className="relative flex justify-center items-center">
+        <Photo
+          src={photo.web}
+          className="max-w-full max-h-full"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          onSwipeLeft={onNext}
+          onSwipeRight={onPrevious}
+        />
+      </div>
     </div>
   );
 }
