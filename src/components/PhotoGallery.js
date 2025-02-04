@@ -95,9 +95,6 @@ function PhotoGallery({ initialUrl, likesUrl }) {
                 <button
                   className="flex items-center gap-1 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1.5 text-white transition-colors"
                   onClick={(e) => {
-                    // Prevent the click event from bubbling up to parent elements
-                    // Without this, clicking the like button would trigger the lightbox close
-                    e.stopPropagation();
                     console.log("photo.id", photo.id);
 
                     var hasLiked = !userLikes[photo.id];
@@ -146,7 +143,11 @@ function PhotoGallery({ initialUrl, likesUrl }) {
                     }
                   }}
                 >
-                  {userLikes[photo.id] ? <AiFillHeart /> : <AiOutlineHeart />}
+                  {userLikes[photo.id] ? (
+                    <AiFillHeart color="#E60026" />
+                  ) : (
+                    <AiOutlineHeart />
+                  )}
                   <span className="text-sm font-medium">{photo.likes}</span>
                 </button>
               </div>
