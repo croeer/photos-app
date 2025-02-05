@@ -41,21 +41,6 @@ function Photo({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         />
-        <div className="absolute bottom-4 right-4 flex items-center gap-2">
-          <button
-            className="flex items-center gap-1 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1.5 text-white transition-colors"
-            onClick={(e) => {
-              // Prevent the click event from bubbling up to parent elements
-              // Without this, clicking the like button would trigger the lightbox close
-              e.stopPropagation();
-              setLiked(!liked);
-              // TODO: Implement like functionality
-            }}
-          >
-            {liked ? <AiFillHeart /> : <AiOutlineHeart />}
-            <span className="text-sm font-medium">{125}</span>
-          </button>
-        </div>
       </div>
     </>
   );
