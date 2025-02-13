@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
 function Photo({
   src,
@@ -9,6 +10,7 @@ function Photo({
 }) {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [liked, setLiked] = useState(false);
 
   const handleTouchStart = useCallback((e) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -27,16 +29,20 @@ function Photo({
   }, [touchStart, touchEnd, minSwipeDistance, onSwipeLeft, onSwipeRight]);
 
   return (
-    <img
-      alt=""
-      className="max-h-[90vh]"
-      src={src}
-      style={{ marginLeft: touchEnd !== 0 ? touchEnd - touchStart : 0 }}
-      onClick={onClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    />
+    <>
+      <div className="relative inline-block">
+        <img
+          alt=""
+          className="max-h-[90vh]"
+          src={src}
+          style={{ marginLeft: touchEnd !== 0 ? touchEnd - touchStart : 0 }}
+          onClick={onClick}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        />
+      </div>
+    </>
   );
 }
 
@@ -57,24 +63,30 @@ function Lightbox({ photo, onNext, onPrevious, onClose }) {
 
   return (
     <div
-      className="fixed top-0 left-0 z-80 w-screen h-screen flex justify-center items-center bg-black/70"
+      className="fixed top-0 left-0 z-50 w-screen h-screen flex justify-center items-center bg-black/70"
       onClick={onClose}
     >
+      {/* Close Button with the highest z-index */}
       <button
-        className="fixed z-90 top-6 right-8 text-white text-5xl font-bold cursor-pointer"
+        className="fixed z-[9999] top-6 right-8 text-white text-5xl font-bold cursor-pointer"
         onClick={onClose}
       >
         &times;
       </button>
-      <Photo
-        src={photo.web}
-        onClick={(e) => {
-          e.stopPropagation();
-          onNext();
-        }}
-        onSwipeLeft={onNext}
-        onSwipeRight={onPrevious}
-      />
+
+      {/* Image Container to constrain large images */}
+      <div className="relative flex justify-center items-center">
+        <Photo
+          src={photo.web}
+          className="max-w-full max-h-full"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNext();
+          }}
+          onSwipeLeft={onNext}
+          onSwipeRight={onPrevious}
+        />
+      </div>
     </div>
   );
 }
