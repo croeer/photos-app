@@ -10,6 +10,7 @@ import PhotoUpload from "./components/PhotoUpload";
 import PhotoGallery from "./components/PhotoGallery";
 import LoadingBar from "./components/LoadingBar";
 import { LuGlasses } from "react-icons/lu";
+import { useAuth, hasAuthParams } from "react-oidc-context";
 
 interface BootstrapLinks {
   request?: { href: string };
@@ -34,11 +35,20 @@ interface AppProps {
 }
 
 function App({ bootstrapUrl }: AppProps): JSX.Element {
+  const auth = useAuth();
   const [bootstrap, setBootstrap] = useState<Bootstrap | undefined>(undefined);
   const [showHelp, setShowHelp] = useState(false);
   const [showRandomChallenge, setShowRandomChallenge] = useState(false);
   const [challenge, setChallenge] = useState<RandomChallenge | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    if (!hasAuthParams() && !auth.isAuthenticated) {
+      console.log("Redirecting to login");
+      console.log(auth);
+      auth.signinRedirect();
+    }
+  }, []);
 
   useEffect(() => {
     console.log("Fetching bootstrap data from", bootstrapUrl);
@@ -55,6 +65,14 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  if (auth.isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (auth.error) {
+    return <div>Oops... {auth.error.message}</div>;
+  }
 
   const handleToggleHelp = () => {
     setShowHelp(!showHelp);

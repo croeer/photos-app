@@ -4,6 +4,7 @@ import Lightbox from "./Lightbox";
 import LoadingBar from "./LoadingBar";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "react-oidc-context";
 
 const getUserId = () => {
   let userId = localStorage.getItem("userId");
@@ -15,6 +16,8 @@ const getUserId = () => {
 };
 
 function PhotoGallery({ initialUrl, likesUrl }) {
+  const auth = useAuth();
+
   const [photos, setPhotos] = useState([]);
   const [nextUrl, setNextUrl] = useState(undefined);
   const [selected, setSelected] = useState(undefined);
@@ -57,16 +60,38 @@ function PhotoGallery({ initialUrl, likesUrl }) {
   }, [likesUrl]);
 
   const doFetch = useCallback(async () => {
+    if (auth.isLoading) {
+      return false;
+    }
+    if (!auth.isAuthenticated) {
+      return false;
+    }
+    
     if (!nextUrl || ongoingFetch.current.has(nextUrl)) return; // Prevent duplicate fetch
     ongoingFetch.current.add(nextUrl); // Mark as in-progress
 
     try {
+      const token = auth.user?.id_token;
+      console.log("user", auth.user);
+      console.log("token", token);
       console.log("fetching", nextUrl);
-      const response = await fetch(nextUrl).then((response) => response.json());
-      console.log(response);
-      setPhotos((photos) => [...photos, ...response?.photos]);
-      setNextUrl(response?._links?.next?.href);
-      return response.length > 0;
+      const response = await fetch(nextUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        console.error("Unauthorized access - 401");
+        // Handle 401 error (e.g., redirect to login)
+        return;
+      }
+
+      const data = await response.json();
+      console.log(data);
+      setPhotos((photos) => [...photos, ...data?.photos]);
+      setNextUrl(data?._links?.next?.href);
+      return data.photos.length > 0;
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -77,7 +102,7 @@ function PhotoGallery({ initialUrl, likesUrl }) {
   return (
     <>
       <InfiniteScroll
-        loadMore={likesLoaded ? doFetch : () => {}}
+        loadMore={likesLoaded && auth.isAuthenticated ? doFetch : () => {}}
         hasMore={!!nextUrl}
         loader={<LoadingBar />}
       >

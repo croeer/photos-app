@@ -3,14 +3,31 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
+import { AuthProvider } from "react-oidc-context";
+
+const onSigninCallback = (): void => {
+  window.history.replaceState({}, document.title, window.location.pathname);
+};
+
+const oidcConfig = {
+  authority: "https://idp.ku0.de/realms/croeer-test",
+  client_id: "photosapp-client",
+  redirect_uri: "http://localhost:3000/",
+  responseType: "code", // Use Authorization Code flow with PKCE
+  scope: "openid profile email",
+  automaticSilentRenew: true,
+  onSigninCallback, // Add this line
+};
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>
+  <AuthProvider {...oidcConfig}>
     <App bootstrapUrl={process.env.REACT_APP_BOOTSTRAP_URL || ""} />
-  </React.StrictMode>
+  </AuthProvider>
+  // </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function
