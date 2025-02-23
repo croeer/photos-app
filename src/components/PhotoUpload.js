@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useAuth } from "react-oidc-context";
 
 const PendingUpload = () => (
   <svg
@@ -43,6 +44,15 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
   const [isOpen, setOpen] = useState(false);
   const [uploads, setUploads] = useState([]);
   const [error, setError] = useState();
+  const tokenRef = useRef(null);
+  const auth = useAuth?.(); // Check if useAuth exists
+  const isAuthEnabled = !!auth;
+
+  useEffect(() => {
+    if (isAuthEnabled && auth?.isAuthenticated) {
+      tokenRef.current = auth.user?.id_token;
+    }
+  }, [auth.isAuthenticated, auth.user, isAuthEnabled]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -78,6 +88,9 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
       body: JSON.stringify({
         photos: JSON.stringify(newUploads.map(({ name }) => name)),
       }),
+      headers: isAuthEnabled
+        ? { Authorization: `Bearer ${tokenRef.current}` }
+        : {},
     }).then((response) => response.json());
 
     for (let i = 0; i < newUploads.length; i++) {
@@ -94,7 +107,7 @@ function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
         newUploads[i] = { ...newUploads[i], status: "uploading" };
         return newUploads;
       });
-
+      console.log("Uploading", request.url, e.target.files[i]);
       await fetch(request.url, {
         method: "POST",
         body: formData,

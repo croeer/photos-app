@@ -35,7 +35,9 @@ interface AppProps {
 }
 
 function App({ bootstrapUrl }: AppProps): JSX.Element {
-  const auth = useAuth();
+  const auth = useAuth?.(); // Check if useAuth exists
+  const isAuthEnabled = !!auth;
+
   const [bootstrap, setBootstrap] = useState<Bootstrap | undefined>(undefined);
   const [showHelp, setShowHelp] = useState(false);
   const [showRandomChallenge, setShowRandomChallenge] = useState(false);
@@ -43,7 +45,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    if (!hasAuthParams() && !auth.isAuthenticated) {
+    if (isAuthEnabled && !hasAuthParams() && !auth?.isAuthenticated) {
       console.log("Redirecting to login");
       console.log(auth);
       auth.signinRedirect();
@@ -66,11 +68,11 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (auth.isLoading) {
+  if (isAuthEnabled && auth.isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (auth.error) {
+  if (isAuthEnabled && auth.error) {
     return <div>Oops... {auth.error.message}</div>;
   }
 

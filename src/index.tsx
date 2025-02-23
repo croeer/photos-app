@@ -9,25 +9,32 @@ const onSigninCallback = (): void => {
   window.history.replaceState({}, document.title, window.location.pathname);
 };
 
-const oidcConfig = {
-  authority: "https://idp.ku0.de/realms/croeer-test",
-  client_id: "photosapp-client",
-  redirect_uri: "http://localhost:3000/",
-  responseType: "code", // Use Authorization Code flow with PKCE
-  scope: "openid profile email",
-  automaticSilentRenew: true,
-  onSigninCallback, // Add this line
-};
+const oidcAuthority = process.env.REACT_APP_OIDC_AUTHORITY || "";
+const oidcClientId = process.env.REACT_APP_OIDC_CLIENT_ID || "";
+
+const oidcConfig = oidcAuthority
+  ? {
+      authority: oidcAuthority,
+      client_id: oidcClientId,
+      redirect_uri: window.location.origin,
+      responseType: "code",
+      scope: "openid profile email",
+      automaticSilentRenew: true,
+      onSigninCallback,
+    }
+  : null;
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
-  // <React.StrictMode>
-  <AuthProvider {...oidcConfig}>
+  oidcConfig ? (
+    <AuthProvider {...oidcConfig}>
+      <App bootstrapUrl={process.env.REACT_APP_BOOTSTRAP_URL || ""} />
+    </AuthProvider>
+  ) : (
     <App bootstrapUrl={process.env.REACT_APP_BOOTSTRAP_URL || ""} />
-  </AuthProvider>
-  // </React.StrictMode>
+  )
 );
 
 // If you want to start measuring performance in your app, pass a function

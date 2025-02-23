@@ -16,101 +16,130 @@ const getUserId = () => {
 };
 
 function PhotoGallery({ initialUrl, likesUrl }) {
-  const auth = useAuth();
+  const auth = useAuth?.(); // Check if useAuth exists
+  const isAuthEnabled = !!auth;
 
   const [photos, setPhotos] = useState([]);
   const [nextUrl, setNextUrl] = useState(undefined);
   const [selected, setSelected] = useState(undefined);
   const [userLikes, setUserLikes] = useState({});
   const [likesLoaded, setLikesLoaded] = useState(false);
-  const ongoingFetch = useRef(new Set()); // Stores in-progress URLs
+  const ongoingFetch = useRef(new Set());
+  const hasFetchedLikes = useRef(false);
+  const tokenRef = useRef(null);
 
-  const hasFetchedLikes = useRef(false); // Prevents multiple fetches
+  useEffect(() => {
+    if (isAuthEnabled && auth.isAuthenticated) {
+      tokenRef.current = auth.user?.id_token;
+    }
+  }, [auth.isAuthenticated, auth.user, isAuthEnabled]);
 
   useEffect(() => {
     setNextUrl(initialUrl);
   }, [initialUrl]);
 
   useEffect(() => {
-    console.log("useeffect: likes");
-    if (hasFetchedLikes.current) return; // Run only once
-    hasFetchedLikes.current = true; // Mark as executed
+    if (hasFetchedLikes.current || !tokenRef.current) return;
+    hasFetchedLikes.current = true;
 
     const fetchLikes = async () => {
       try {
         const userId = getUserId();
-        const response = await fetch(`${likesUrl}/${userId}`);
+        const response = await fetch(`${likesUrl}/${userId}`, {
+          headers: isAuthEnabled
+            ? { Authorization: `Bearer ${tokenRef.current}` }
+            : {},
+        });
         const data = await response.json();
-
-        // Convert array of liked photo IDs into a hashmap for O(1) lookups
-        const likesMap = data.photos.reduce((acc, photoId) => {
-          acc["image#" + photoId] = true;
-          return acc;
-        }, {});
-
-        setUserLikes(likesMap);
-        setLikesLoaded(true);
+        setUserLikes(
+          data.photos.reduce((acc, photoId) => {
+            acc[`image#${photoId}`] = true;
+            return acc;
+          }, {})
+        );
       } catch (error) {
         console.error("Error fetching user likes:", error);
+      } finally {
         setLikesLoaded(true);
       }
     };
 
     fetchLikes();
-  }, [likesUrl]);
+  }, [likesUrl, isAuthEnabled]);
 
   const doFetch = useCallback(async () => {
-    if (auth.isLoading) {
-      return false;
-    }
-    if (!auth.isAuthenticated) {
-      return false;
-    }
-    
-    if (!nextUrl || ongoingFetch.current.has(nextUrl)) return; // Prevent duplicate fetch
-    ongoingFetch.current.add(nextUrl); // Mark as in-progress
+    if (
+      (isAuthEnabled && !auth?.isAuthenticated) ||
+      !nextUrl ||
+      ongoingFetch.current.has(nextUrl)
+    )
+      return;
+    ongoingFetch.current.add(nextUrl);
 
     try {
-      const token = auth.user?.id_token;
-      console.log("user", auth.user);
-      console.log("token", token);
-      console.log("fetching", nextUrl);
       const response = await fetch(nextUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: isAuthEnabled
+          ? { Authorization: `Bearer ${tokenRef.current}` }
+          : {},
       });
-
       if (response.status === 401) {
         console.error("Unauthorized access - 401");
-        // Handle 401 error (e.g., redirect to login)
         return;
       }
-
       const data = await response.json();
-      console.log(data);
-      setPhotos((photos) => [...photos, ...data?.photos]);
+      setPhotos((prev) => [...prev, ...data.photos]);
       setNextUrl(data?._links?.next?.href);
-      return data.photos.length > 0;
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
-      ongoingFetch.current.delete(nextUrl); // Remove from in-progress after completion
+      ongoingFetch.current.delete(nextUrl);
     }
-  });
+  }, [auth.isAuthenticated, nextUrl, isAuthEnabled]);
+
+  const toggleLike = async (photo, idx) => {
+    const photoId = photo.id.split("#")[1];
+    const hasLiked = !userLikes[photo.id];
+
+    setPhotos((prev) => {
+      const updated = [...prev];
+      updated[idx].likes += hasLiked ? 1 : -1;
+      return updated;
+    });
+
+    setUserLikes((prev) => ({ ...prev, [photo.id]: hasLiked }));
+
+    try {
+      await fetch(
+        `${likesUrl}/${getUserId()}/${photoId}?hasLiked=${hasLiked}`,
+        {
+          method: "POST",
+          headers: isAuthEnabled
+            ? { Authorization: `Bearer ${tokenRef.current}` }
+            : {},
+        }
+      );
+    } catch (error) {
+      console.error("Error updating like:", error);
+      setPhotos((prev) => {
+        const updated = [...prev];
+        updated[idx].likes += hasLiked ? -1 : 1;
+        return updated;
+      });
+      setUserLikes((prev) => ({ ...prev, [photo.id]: !hasLiked }));
+    }
+  };
 
   return (
     <>
       <InfiniteScroll
-        loadMore={likesLoaded && auth.isAuthenticated ? doFetch : () => {}}
+        loadMore={likesLoaded ? doFetch : () => {}}
         hasMore={!!nextUrl}
         loader={<LoadingBar />}
       >
         <div className="grid gap-1 grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
           {photos.map((photo, idx) => (
-            <div className="relative inline-block">
+            <div key={photo.id} className="relative inline-block">
               <img
-                key={photo.id}
                 className="flex object-cover w-full h-full cursor-pointer"
                 alt=""
                 src={photo.thumbnail}
@@ -119,54 +148,7 @@ function PhotoGallery({ initialUrl, likesUrl }) {
               <div className="absolute bottom-4 right-4 flex items-center gap-2">
                 <button
                   className="flex items-center gap-1 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1.5 text-white transition-colors"
-                  onClick={(e) => {
-                    console.log("photo.id", photo.id);
-
-                    var hasLiked = !userLikes[photo.id];
-                    console.log("hasLiked", hasLiked);
-
-                    // update like count
-                    setPhotos((photos) => {
-                      const newPhotos = [...photos];
-                      newPhotos[idx].likes = userLikes[photo.id]
-                        ? newPhotos[idx].likes - 1
-                        : newPhotos[idx].likes + 1;
-                      return newPhotos;
-                    });
-
-                    // toggle heart
-                    setUserLikes((userLikes) => {
-                      const newUserLikes = { ...userLikes };
-                      newUserLikes[photo.id] = !newUserLikes[photo.id];
-                      return newUserLikes;
-                    });
-
-                    // Call likes API
-                    if (likesUrl) {
-                      const photoId = photo.id.split("#")[1];
-                      fetch(
-                        `${likesUrl}/${getUserId()}/${photoId}?hasLiked=${hasLiked}`,
-                        {
-                          method: "POST",
-                        }
-                      ).catch((err) => {
-                        console.error("Error updating like:", err);
-                        // Revert optimistic UI updates on error
-                        setPhotos((photos) => {
-                          const newPhotos = [...photos];
-                          newPhotos[idx].likes = userLikes[photo.id]
-                            ? newPhotos[idx].likes + 1
-                            : newPhotos[idx].likes - 1;
-                          return newPhotos;
-                        });
-                        setUserLikes((userLikes) => {
-                          const newUserLikes = { ...userLikes };
-                          newUserLikes[photo.id] = !newUserLikes[photo.id];
-                          return newUserLikes;
-                        });
-                      });
-                    }
-                  }}
+                  onClick={() => toggleLike(photo, idx)}
                 >
                   {userLikes[photo.id] ? (
                     <AiFillHeart color="#E60026" />
@@ -182,22 +164,10 @@ function PhotoGallery({ initialUrl, likesUrl }) {
       </InfiniteScroll>
       <Lightbox
         photo={selected !== undefined && photos[selected]}
-        onNext={() => {
-          if (selected + 1 < photos.length) {
-            setSelected(selected + 1);
-            return;
-          }
-
-          if (!nextUrl) {
-            setSelected(0);
-            return;
-          }
-
-          doFetch().then((hasMorePhotos) =>
-            setSelected(hasMorePhotos ? selected + 1 : 0)
-          );
-        }}
-        onPrevious={() => setSelected(Math.max(0, selected - 1))}
+        onNext={() =>
+          setSelected((prev) => (prev + 1 < photos.length ? prev + 1 : 0))
+        }
+        onPrevious={() => setSelected((prev) => Math.max(0, prev - 1))}
         onClose={() => setSelected(undefined)}
       />
     </>
