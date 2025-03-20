@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import ReactPlayer from "react-player";
+
 import logo from "./logo.svg";
 import {
   AiOutlineQuestionCircle,
@@ -10,6 +12,7 @@ import PhotoUpload from "./components/PhotoUpload";
 import PhotoGallery from "./components/PhotoGallery";
 import LoadingBar from "./components/LoadingBar";
 import { LuGlasses } from "react-icons/lu";
+import VideoLightbox from "./components/VideoLightbox";
 
 interface BootstrapLinks {
   request?: { href: string };
@@ -200,10 +203,18 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           />
         </div>
       )}
-      <PhotoGallery
+
+      <VideoLightbox
+        video="https://d3glvevottw146.cloudfront.net/videos/1E78E8F7-E337-4601-8593-F8FE0BE8D89A.MOV"
+        onNext={() => {}}
+        onClose={() => {}}
+        onPrevious={() => {}}
+      />
+
+      {/* <PhotoGallery
         initialUrl={bootstrap._links?.request?.href}
         likesUrl={bootstrap._links?.likes?.href}
-      />
+      /> */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
