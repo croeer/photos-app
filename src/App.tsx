@@ -23,6 +23,7 @@ interface Bootstrap {
   maxPhotosPerRequest?: number;
   enablePhotoChallenge?: boolean;
   enablePhotoUpload?: boolean;
+  enableLikes?: boolean;
 }
 
 interface RandomChallenge {
@@ -203,6 +204,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
       <PhotoGallery
         initialUrl={bootstrap._links?.request?.href}
         likesUrl={bootstrap._links?.likes?.href}
+        enableLikes={!!bootstrap.enableLikes}
       />
       {showScrollTop && (
         <button
