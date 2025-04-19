@@ -29,8 +29,13 @@ function PhotoGallery({ initialUrl, likesUrl, enableLikes }) {
   }, [initialUrl]);
 
   useEffect(() => {
-    if (!enableLikes || hasFetchedLikes.current) return; // Run only if likes are enabled
+    if (hasFetchedLikes.current) return; // Run only if likes are enabled
     hasFetchedLikes.current = true; // Mark as executed
+
+    if (!enableLikes) {
+      setLikesLoaded(true);
+      return;
+    }
 
     const fetchLikes = async () => {
       try {

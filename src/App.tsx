@@ -18,12 +18,21 @@ interface BootstrapLinks {
   likes?: { href: string };
 }
 
+interface ThemeConfig {
+  title: string;
+  favicon: string;
+  logo: string;
+  headerText: string;
+  subHeaderText: string;
+  description: string;
+}
 interface Bootstrap {
   _links?: BootstrapLinks;
   maxPhotosPerRequest?: number;
   enablePhotoChallenge?: boolean;
   enablePhotoUpload?: boolean;
   enableLikes?: boolean;
+  theme?: ThemeConfig;
 }
 
 interface RandomChallenge {
@@ -125,14 +134,18 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
       </div>
       <div className="mt-5 mb-3 flex justify-center">
         <div className="text-center text-gray-600 text-3xl font-custom">
-          Sandra & Chris
+          {bootstrap.theme?.headerText}
         </div>
       </div>
       <div className="mt-3 mb-3 flex justify-center">
-        <div className="text-center text-gray-600 text-sm">22.03.2025</div>
+        <div className="text-center text-gray-600 text-sm">
+          {bootstrap.theme?.subHeaderText}
+        </div>
       </div>
       <div className="mt-3 mb-5 flex justify-center">
-        <div className="text-center text-gray-600">Wir haben ja gesagt!</div>
+        <div className="text-center text-gray-600">
+          {bootstrap.theme?.description}
+        </div>
       </div>
       <div className="mt-10 mb-10 flex justify-center">
         <img src={logo} alt="" />
@@ -141,13 +154,19 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-5 rounded shadow-lg max-w-sm text-center">
             <h2 className="text-lg font-bold mb-3">Wie benutzt man die App?</h2>
-            <p>Willkommen zur Hochzeit von Sandra & Chris!</p>
-            <p className="mt-3">Hier kannst du Fotos hochladen und ansehen.</p>
-            <p className="mt-3">
-              Klicke auf den Knopf „Foto hochladen“. Wähle ein oder mehrere
-              Fotos von deinem Handy aus und warte, bis die Fotos hochgeladen
-              sind. Sie erscheinen dann automatisch in der Galerie.
-            </p>
+            {bootstrap.enablePhotoUpload && (
+              <>
+                <p className="mt-3">
+                  Hier kannst du Fotos hochladen und ansehen.
+                </p>
+                <p className="mt-3">
+                  Klicke auf den Knopf „Foto hochladen“. Wähle ein oder mehrere
+                  Fotos von deinem Handy aus und warte, bis die Fotos
+                  hochgeladen sind. Sie erscheinen dann automatisch in der
+                  Galerie.
+                </p>
+              </>
+            )}
             <p className="mt-3">
               Foto zu klein? Keine{" "}
               {
@@ -157,13 +176,15 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
               }
               ? Klicke auf ein Foto, um es dir größer anzusehen.
             </p>
-            <p className="mt-3">
-              Über das{" "}
-              <span className="inline-block">
-                <AiOutlineCamera />
-              </span>
-              -Symbol kannst du dir Inspiration für eine Foto-Challenge holen.
-            </p>
+            {bootstrap.enablePhotoChallenge && (
+              <p className="mt-3">
+                Über das{" "}
+                <span className="inline-block">
+                  <AiOutlineCamera />
+                </span>
+                -Symbol kannst du dir Inspiration für eine Foto-Challenge holen.
+              </p>
+            )}
             <button
               onClick={handleToggleHelp}
               className="mt-5 px-4 py-2 bg-purple-800 text-white rounded hover:bg-purple-600"
