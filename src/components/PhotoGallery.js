@@ -14,7 +14,7 @@ const getUserId = () => {
   return userId;
 };
 
-function PhotoGallery({ initialUrl, likesUrl }) {
+function PhotoGallery({ initialUrl, likesUrl, enableLikes }) {
   const [photos, setPhotos] = useState([]);
   const [nextUrl, setNextUrl] = useState(undefined);
   const [selected, setSelected] = useState(undefined);
@@ -29,8 +29,7 @@ function PhotoGallery({ initialUrl, likesUrl }) {
   }, [initialUrl]);
 
   useEffect(() => {
-    console.log("useeffect: likes");
-    if (hasFetchedLikes.current) return; // Run only once
+    if (!enableLikes || hasFetchedLikes.current) return; // Run only if likes are enabled
     hasFetchedLikes.current = true; // Mark as executed
 
     const fetchLikes = async () => {
@@ -54,16 +53,14 @@ function PhotoGallery({ initialUrl, likesUrl }) {
     };
 
     fetchLikes();
-  }, [likesUrl]);
+  }, [likesUrl, enableLikes]);
 
   const doFetch = useCallback(async () => {
     if (!nextUrl || ongoingFetch.current.has(nextUrl)) return; // Prevent duplicate fetch
     ongoingFetch.current.add(nextUrl); // Mark as in-progress
 
     try {
-      console.log("fetching", nextUrl);
       const response = await fetch(nextUrl).then((response) => response.json());
-      console.log(response);
       setPhotos((photos) => [...photos, ...response?.photos]);
       setNextUrl(response?._links?.next?.href);
       return response.length > 0;
@@ -91,66 +88,65 @@ function PhotoGallery({ initialUrl, likesUrl }) {
                 src={photo.thumbnail}
                 onClick={() => setSelected(idx)}
               />
-              <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                <button
-                  className="flex items-center gap-1 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1.5 text-white transition-colors"
-                  onClick={(e) => {
-                    console.log("photo.id", photo.id);
+              {enableLikes && (
+                <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                  <button
+                    className="flex items-center gap-1 bg-white/20 hover:bg-white/30 rounded-full px-3 py-1.5 text-white transition-colors"
+                    onClick={(e) => {
+                      var hasLiked = !userLikes[photo.id];
 
-                    var hasLiked = !userLikes[photo.id];
-                    console.log("hasLiked", hasLiked);
-
-                    // update like count
-                    setPhotos((photos) => {
-                      const newPhotos = [...photos];
-                      newPhotos[idx].likes = userLikes[photo.id]
-                        ? newPhotos[idx].likes - 1
-                        : newPhotos[idx].likes + 1;
-                      return newPhotos;
-                    });
-
-                    // toggle heart
-                    setUserLikes((userLikes) => {
-                      const newUserLikes = { ...userLikes };
-                      newUserLikes[photo.id] = !newUserLikes[photo.id];
-                      return newUserLikes;
-                    });
-
-                    // Call likes API
-                    if (likesUrl) {
-                      const photoId = photo.id.split("#")[1];
-                      fetch(
-                        `${likesUrl}/${getUserId()}/${photoId}?hasLiked=${hasLiked}`,
-                        {
-                          method: "POST",
-                        }
-                      ).catch((err) => {
-                        console.error("Error updating like:", err);
-                        // Revert optimistic UI updates on error
-                        setPhotos((photos) => {
-                          const newPhotos = [...photos];
-                          newPhotos[idx].likes = userLikes[photo.id]
-                            ? newPhotos[idx].likes + 1
-                            : newPhotos[idx].likes - 1;
-                          return newPhotos;
-                        });
-                        setUserLikes((userLikes) => {
-                          const newUserLikes = { ...userLikes };
-                          newUserLikes[photo.id] = !newUserLikes[photo.id];
-                          return newUserLikes;
-                        });
+                      // update like count
+                      setPhotos((photos) => {
+                        const newPhotos = [...photos];
+                        newPhotos[idx].likes = userLikes[photo.id]
+                          ? newPhotos[idx].likes - 1
+                          : newPhotos[idx].likes + 1;
+                        return newPhotos;
                       });
-                    }
-                  }}
-                >
-                  {userLikes[photo.id] ? (
-                    <AiFillHeart color="#E60026" />
-                  ) : (
-                    <AiOutlineHeart />
-                  )}
-                  <span className="text-sm font-medium">{photo.likes}</span>
-                </button>
-              </div>
+
+                      // toggle heart
+                      setUserLikes((userLikes) => {
+                        const newUserLikes = { ...userLikes };
+                        newUserLikes[photo.id] = !newUserLikes[photo.id];
+                        return newUserLikes;
+                      });
+
+                      // Call likes API
+                      if (likesUrl) {
+                        const photoId = photo.id.split("#")[1];
+                        fetch(
+                          `${likesUrl}/${getUserId()}/${photoId}?hasLiked=${hasLiked}`,
+                          {
+                            method: "POST",
+                          }
+                        ).catch((err) => {
+                          console.error("Error updating like:", err);
+                          // Revert optimistic UI updates on error
+                          setPhotos((photos) => {
+                            const newPhotos = [...photos];
+                            newPhotos[idx].likes = userLikes[photo.id]
+                              ? newPhotos[idx].likes + 1
+                              : newPhotos[idx].likes - 1;
+                            return newPhotos;
+                          });
+                          setUserLikes((userLikes) => {
+                            const newUserLikes = { ...userLikes };
+                            newUserLikes[photo.id] = !newUserLikes[photo.id];
+                            return newUserLikes;
+                          });
+                        });
+                      }
+                    }}
+                  >
+                    {userLikes[photo.id] ? (
+                      <AiFillHeart color="#E60026" />
+                    ) : (
+                      <AiOutlineHeart />
+                    )}
+                    <span className="text-sm font-medium">{photo.likes}</span>
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
