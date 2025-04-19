@@ -131,7 +131,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         <div className="text-center text-gray-600 text-sm">22.03.2025</div>
       </div>
       <div className="mt-3 mb-5 flex justify-center">
-        <div className="text-center text-gray-600">Wir sagen ja!</div>
+        <div className="text-center text-gray-600">Wir haben ja gesagt!</div>
       </div>
       <div className="mt-10 mb-10 flex justify-center">
         <img src={logo} alt="" />

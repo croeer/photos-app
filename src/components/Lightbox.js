@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
 function Photo({
   src,
@@ -10,7 +9,6 @@ function Photo({
 }) {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
-  const [liked, setLiked] = useState(false);
 
   const handleTouchStart = useCallback((e) => {
     setTouchStart(e.targetTouches[0].clientX);
