@@ -55,6 +55,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
     fetch(bootstrapUrl)
       .then((response) => response.json())
       .then((data: Bootstrap) => setBootstrap(data));
+    document.title = bootstrap?.theme?.title || "Photo App";
   }, [bootstrapUrl]);
 
   useEffect(() => {
