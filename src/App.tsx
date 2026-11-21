@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import logo from "./logo.svg";
+import StudioUpload, { StudioConfig } from "./components/StudioUpload";
 import {
   AiOutlineQuestionCircle,
   AiOutlineReload,
@@ -27,6 +27,7 @@ interface ThemeConfig {
   description: string;
 }
 interface Bootstrap {
+  studio?: StudioConfig;
   _links?: BootstrapLinks;
   maxPhotosPerRequest?: number;
   enablePhotoChallenge?: boolean;
@@ -51,15 +52,16 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    console.log("Fetching bootstrap data from", bootstrapUrl);
     fetch(bootstrapUrl)
       .then((response) => response.json())
       .then((data: Bootstrap) => setBootstrap(data));
-    document.title = bootstrap?.theme?.title || "Photo App";
   }, [bootstrapUrl]);
 
   useEffect(() => {
-    console.log("figuring out scroll component");
+    document.title = bootstrap?.theme?.title || "Photo App";
+  }, [bootstrap?.theme?.title]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > window.innerHeight);
     };
@@ -98,6 +100,17 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
 
   if (!bootstrap) {
     return <LoadingBar />;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const isSignInCallback = params.has("state") && (params.has("code") || params.has("error"));
+  if (bootstrap.studio && (params.has("studio") || isSignInCallback)) {
+    return (
+      <StudioUpload
+        config={bootstrap.studio}
+        maxPhotosPerRequest={bootstrap.maxPhotosPerRequest}
+      />
+    );
   }
 
   return (
@@ -148,9 +161,9 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           {bootstrap.theme?.description}
         </div>
       </div>
-      <div className="mt-10 mb-10 flex justify-center">
+      {/* <div className="mt-10 mb-10 flex justify-center">
         <img src={logo} alt="" />
-      </div>
+      </div> */}
       {showHelp && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-5 rounded shadow-lg max-w-sm text-center">
@@ -218,13 +231,13 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
             url={bootstrap._links?.request?.href}
             maxPhotosPerRequest={bootstrap.maxPhotosPerRequest}
             onUpload={() => {
-              window.location.reload();
+              window.setTimeout(() => window.location.reload(), 1000);
             }}
           />
         </div>
       )}
       <PhotoGallery
-        initialUrl={bootstrap._links?.request?.href}
+        initialUrl={bootstrap._links?.list?.href || bootstrap._links?.request?.href}
         likesUrl={bootstrap._links?.likes?.href}
         enableLikes={bootstrap.enableLikes}
       />

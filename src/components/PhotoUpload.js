@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const PendingUpload = () => (
   <svg
@@ -39,187 +39,98 @@ const calcUploadProgress = (uploads) => {
   return (processed / uploads.length) * 100;
 };
 
-function PhotoUpload({ url, maxPhotosPerRequest, onUpload }) {
-  const [isOpen, setOpen] = useState(false);
+/**
+ * @param {{url?: string, maxPhotosPerRequest?: number, onUpload: () => void,
+ *   accessToken?: string, onAuthorizationError?: () => void}} props
+ */
+function PhotoUpload({ url, maxPhotosPerRequest, onUpload, accessToken, onAuthorizationError }) {
   const [uploads, setUploads] = useState([]);
-  const [error, setError] = useState();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  const handleUpload = async (e) => {
-    const newUploads = [...e.target.files].map(({ name }) => ({
-      name,
-      status: "pending",
-    }));
-
-    if (newUploads.length === 0) {
-      return;
-    }
-
-    if (newUploads.length > maxPhotosPerRequest) {
-      setError(
-        `Sorry, you can only upload ${maxPhotosPerRequest} photos at a time.`
-      );
-      return;
-    }
-
-    setUploads(newUploads);
-
-    const response = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify({
-        photos: JSON.stringify(newUploads.map(({ name }) => name)),
-      }),
-    }).then((response) => response.json());
-
-    for (let i = 0; i < newUploads.length; i++) {
-      const request = response.urls[i];
-
-      const formData = new FormData();
-      for (const key of Object.keys(request.fields)) {
-        formData.append(key, request.fields[key]);
-      }
-      formData.append("file", e.target.files[i], "file");
-
-      setUploads((uploads) => {
-        const newUploads = [...uploads];
-        newUploads[i] = { ...newUploads[i], status: "uploading" };
-        return newUploads;
-      });
-
-      await fetch(request.url, {
-        method: "POST",
-        body: formData,
-      }).then((response) => {
-        setUploads((uploads) => {
-          const newUploads = [...uploads];
-          newUploads[i] = {
-            ...newUploads[i],
-            status: response.ok ? "uploaded" : "failed",
-          };
-          return newUploads;
-        });
-      });
-    }
-
-    await new Promise((r) => setTimeout(r, 1000));
-    setOpen(false);
+  const handleUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    event.target.value = "";
+    if (!files.length) return;
+    setError("");
     setUploads([]);
-    onUpload();
+    if (files.length > maxPhotosPerRequest) {
+      setError(`Bitte höchstens ${maxPhotosPerRequest} Fotos auf einmal auswählen.`);
+      return;
+    }
+
+    const updateStatus = (index, status) => {
+      setUploads(current => current.map((item, i) => i === index ? { ...item, status } : item));
+    };
+
+    setBusy(true);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: JSON.stringify({ photos: JSON.stringify(files.map(file => file.name)) }),
+      });
+      if ((response.status === 401 || response.status === 403) && onAuthorizationError) {
+        onAuthorizationError();
+        return;
+      }
+      if (!response.ok) throw new Error();
+      const { urls } = await response.json();
+      if (!Array.isArray(urls) || urls.length !== files.length) throw new Error();
+
+      setUploads(files.map(file => ({ name: file.name, status: "pending" })));
+      let failed = 0;
+      for (const [index, file] of files.entries()) {
+        const form = new FormData();
+        Object.entries(urls[index].fields).forEach(([key, value]) => form.append(key, value));
+        form.append("file", file);
+        updateStatus(index, "uploading");
+        try {
+          const result = await fetch(urls[index].url, { method: "POST", body: form });
+          if (!result.ok) throw new Error();
+          updateStatus(index, "uploaded");
+        } catch {
+          updateStatus(index, "failed");
+          failed++;
+        }
+      }
+      if (failed) {
+        setError(`${failed} von ${files.length} Fotos fehlgeschlagen. Bitte die durchgestrichenen Fotos erneut auswählen.`);
+      } else {
+        setUploads([]);
+        onUpload();
+      }
+    } catch {
+      setError("Der Upload konnte nicht gestartet werden. Bitte erneut versuchen.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <>
-      {uploads.length > 0 ? (
-        <div className="mt-8">
-          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div
-              className="bg-blue-600 h-2.5 rounded-full"
-              style={{
-                width: `${calcUploadProgress(uploads)}%`,
-              }}
-            ></div>
-          </div>
-          <ul className="mt-4 bg-white rounded-lg border border-gray-200 text-gray-900">
-            {uploads.map(({ name, status }) => (
-              <li className={toUploadClassName(status)} key={name}>
+    <div>
+      {!busy && (
+        <label className="inline-block cursor-pointer rounded-lg bg-cadbury px-5 py-2.5 text-sm font-medium text-white focus-within:ring-4 hover:bg-purple-800">
+          Fotos hochladen
+          <input type="file" onChange={handleUpload} accept=".jpg,.jpeg,image/jpeg" multiple className="sr-only" />
+        </label>
+      )}
+      {busy && !uploads.length && <p role="status">Upload wird vorbereitet …</p>}
+      {uploads.length > 0 && (
+        <div className="mt-4">
+          <progress aria-label="Upload-Fortschritt" max="100" value={calcUploadProgress(uploads)} />
+          <ul className="mt-2 rounded-lg border border-gray-200">
+            {uploads.map(({ name, status }, index) => (
+              <li className={toUploadClassName(status)} key={index}>
                 {status === "uploading" && <PendingUpload />}
                 {name}
               </li>
             ))}
           </ul>
         </div>
-      ) : (
-        <div className="relative">
-          <button className="block text-white bg-cadbury hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-            Fotos hochladen
-          </button>
-          <input
-            type="file"
-            onChange={handleUpload}
-            accept=".jpg, .jpeg, image/jpg, image/jpeg"
-            multiple
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-        </div>
       )}
-      {isOpen && (
-        <div className="fixed top-0 left-0 z-80 w-screen h-screen flex justify-center items-center bg-black/70 p-2 md:p-0">
-          <div className="relative bg-white rounded-lg z-90 w-full h-full max-w-md md:h-auto overflow-auto">
-            <button
-              type="button"
-              className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white"
-              onClick={() => {
-                if (uploads.length > 0) return;
-                setOpen(false);
-                setUploads([]);
-              }}
-            >
-              <svg
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </button>
-            <div className="py-6 px-6">
-              {error && (
-                <div class="mt-8 bg-red-100 rounded-lg py-2 px-5 text-base text-red-700 mb-3">
-                  {error}
-                </div>
-              )}
-              {uploads.length > 0 ? (
-                <div className="mt-8">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full"
-                      style={{
-                        width: `${calcUploadProgress(uploads)}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <ul className="mt-4 bg-white rounded-lg border border-gray-200 text-gray-900">
-                    {uploads.map(({ name, status }) => (
-                      <li className={toUploadClassName(status)} key={name}>
-                        {status === "uploading" && <PendingUpload />}
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <div className="relative">
-                  <button className="block text-white bg-cadbury hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    Fotos hochladen
-                  </button>
-                  <input
-                    type="file"
-                    onChange={handleUpload}
-                    accept=".jpg, .jpeg, image/jpg, image/jpeg"
-                    multiple
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
+    </div>
   );
 }
 

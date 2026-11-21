@@ -1,3 +1,13 @@
+# Photos app
+
+## Ceramics gallery and studio uploads
+
+Customers browse the gallery at the site root. Staff bookmark `/?studio` on the same site, choose **Anmelden**, then select one or more JPEGs. Uploaded photos appear in the public gallery once image processing finishes.
+
+The cs-Arts Terragrunt environment enables `staff_uploads_only = true` and `enable_photoupload = true`. Apply that environment and deploy the matching client build. The stack creates a dedicated Amazon Cognito user pool with administrator-only invitations. In the Cognito console, open the pool identified by the `studio_user_pool_id` Terraform output and create a user with the staff member’s email address and an email invitation. They set their password on first sign-in. Disable their account in the same pool when they leave.
+
+API Gateway requires a staff access token on `POST /api/studio/upload` before the signer can issue S3 upload forms. Gallery reads stay public in the ceramics configuration. Event environments can keep guest uploads by leaving `staff_uploads_only` at its default of `false`. Setting `enable_photoupload = false` disables uploads for everyone.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
