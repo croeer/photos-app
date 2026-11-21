@@ -14,6 +14,7 @@ import logo from "./logo.svg";
 interface BootstrapLinks {
   request?: { href: string };
   list?: { href: string };
+  tags?: { href: string };
   challenge?: { href: string };
   likes?: { href: string };
 }
@@ -109,6 +110,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
     return (
       <StudioUpload
         config={bootstrap.studio}
+        listUrl={bootstrap._links?.list?.href}
         maxPhotosPerRequest={bootstrap.maxPhotosPerRequest}
       />
     );
@@ -241,6 +243,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         initialUrl={
           bootstrap._links?.list?.href || bootstrap._links?.request?.href
         }
+        tagsUrl={bootstrap._links?.tags?.href}
         likesUrl={bootstrap._links?.likes?.href}
         enableLikes={bootstrap.enableLikes}
       />
