@@ -10,7 +10,7 @@ import PhotoUpload from "./components/PhotoUpload";
 import PhotoGallery from "./components/PhotoGallery";
 import LoadingBar from "./components/LoadingBar";
 import { LuGlasses } from "react-icons/lu";
-
+import logo from "./logo.svg";
 interface BootstrapLinks {
   request?: { href: string };
   list?: { href: string };
@@ -103,7 +103,8 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
   }
 
   const params = new URLSearchParams(window.location.search);
-  const isSignInCallback = params.has("state") && (params.has("code") || params.has("error"));
+  const isSignInCallback =
+    params.has("state") && (params.has("code") || params.has("error"));
   if (bootstrap.studio && (params.has("studio") || isSignInCallback)) {
     return (
       <StudioUpload
@@ -146,7 +147,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           </button>
         </div>
       </div>
-      <div className="mt-5 mb-3 flex justify-center">
+      {/* <div className="mt-5 mb-3 flex justify-center">
         <div className="text-center text-gray-600 text-3xl font-custom">
           {bootstrap.theme?.headerText}
         </div>
@@ -160,10 +161,10 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         <div className="text-center text-gray-600">
           {bootstrap.theme?.description}
         </div>
-      </div>
-      {/* <div className="mt-10 mb-10 flex justify-center">
-        <img src={logo} alt="" />
       </div> */}
+      <div className="mt-10 mb-10 flex justify-center">
+        <img src={logo} alt="" style={{ maxWidth: "10%", height: "auto" }} />
+      </div>
       {showHelp && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-5 rounded shadow-lg max-w-sm text-center">
@@ -237,7 +238,9 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         </div>
       )}
       <PhotoGallery
-        initialUrl={bootstrap._links?.list?.href || bootstrap._links?.request?.href}
+        initialUrl={
+          bootstrap._links?.list?.href || bootstrap._links?.request?.href
+        }
         likesUrl={bootstrap._links?.likes?.href}
         enableLikes={bootstrap.enableLikes}
       />
