@@ -16,6 +16,13 @@ const groups = [
     ["gepunktet", "pottery decorated with polka dots"], ["geblümt", "pottery with a floral pattern"],
     ["einfarbig", "plain solid-colored pottery without a pattern"], [null, "pottery with another surface pattern"],
   ],
+  [
+    ["dackel", "pottery decorated with a picture of a long-bodied, short-legged dachshund dog"],
+    ["lebkuchenmann", "pottery decorated with a gingerbread man cookie with icing eyes and buttons"],
+    ["weihnachtsbaum", "pottery decorated with a Christmas tree with ornaments on its evergreen branches"],
+    ["weihnachten", "pottery with festive Christmas imagery such as holly berries, candy canes or wrapped presents"],
+    [null, "pottery with a different decorative motif or a plain undecorated surface"],
+  ],
 ];
 let loaded;
 
