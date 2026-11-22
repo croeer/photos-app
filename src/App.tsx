@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import logo from "./logo.svg";
+import StudioUpload, { StudioConfig } from "./components/StudioUpload";
 import {
   AiOutlineQuestionCircle,
   AiOutlineReload,
@@ -10,10 +10,11 @@ import PhotoUpload from "./components/PhotoUpload";
 import PhotoGallery from "./components/PhotoGallery";
 import LoadingBar from "./components/LoadingBar";
 import { LuGlasses } from "react-icons/lu";
-
+import logo from "./logo.svg";
 interface BootstrapLinks {
   request?: { href: string };
   list?: { href: string };
+  tags?: { href: string };
   challenge?: { href: string };
   likes?: { href: string };
 }
@@ -27,6 +28,7 @@ interface ThemeConfig {
   description: string;
 }
 interface Bootstrap {
+  studio?: StudioConfig;
   _links?: BootstrapLinks;
   maxPhotosPerRequest?: number;
   enablePhotoChallenge?: boolean;
@@ -51,15 +53,16 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
-    console.log("Fetching bootstrap data from", bootstrapUrl);
     fetch(bootstrapUrl)
       .then((response) => response.json())
       .then((data: Bootstrap) => setBootstrap(data));
-    document.title = bootstrap?.theme?.title || "Photo App";
   }, [bootstrapUrl]);
 
   useEffect(() => {
-    console.log("figuring out scroll component");
+    document.title = bootstrap?.theme?.title || "Photo App";
+  }, [bootstrap?.theme?.title]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > window.innerHeight);
     };
@@ -100,6 +103,19 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
     return <LoadingBar />;
   }
 
+  const params = new URLSearchParams(window.location.search);
+  const isSignInCallback =
+    params.has("state") && (params.has("code") || params.has("error"));
+  if (bootstrap.studio && (params.has("studio") || isSignInCallback)) {
+    return (
+      <StudioUpload
+        config={bootstrap.studio}
+        listUrl={bootstrap._links?.list?.href}
+        maxPhotosPerRequest={bootstrap.maxPhotosPerRequest}
+      />
+    );
+  }
+
   return (
     <div className="App">
       <div className="relative">
@@ -133,7 +149,7 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
           </button>
         </div>
       </div>
-      <div className="mt-5 mb-3 flex justify-center">
+      {/* <div className="mt-5 mb-3 flex justify-center">
         <div className="text-center text-gray-600 text-3xl font-custom">
           {bootstrap.theme?.headerText}
         </div>
@@ -147,9 +163,9 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
         <div className="text-center text-gray-600">
           {bootstrap.theme?.description}
         </div>
-      </div>
+      </div> */}
       <div className="mt-10 mb-10 flex justify-center">
-        <img src={logo} alt="" />
+        <img src={logo} alt="" style={{ maxWidth: "10%", height: "auto" }} />
       </div>
       {showHelp && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -218,13 +234,16 @@ function App({ bootstrapUrl }: AppProps): JSX.Element {
             url={bootstrap._links?.request?.href}
             maxPhotosPerRequest={bootstrap.maxPhotosPerRequest}
             onUpload={() => {
-              window.location.reload();
+              window.setTimeout(() => window.location.reload(), 1000);
             }}
           />
         </div>
       )}
       <PhotoGallery
-        initialUrl={bootstrap._links?.request?.href}
+        initialUrl={
+          bootstrap._links?.list?.href || bootstrap._links?.request?.href
+        }
+        tagsUrl={bootstrap._links?.tags?.href}
         likesUrl={bootstrap._links?.likes?.href}
         enableLikes={bootstrap.enableLikes}
       />
